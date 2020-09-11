@@ -1,6 +1,6 @@
 {
   "pages":[
-    "pages/index/index",
+    "pages/home/home",
     "pages/quiz/quiz",
     "pages/wiki/wiki",
     "pages/coupon/coupon",
@@ -11,6 +11,16 @@
     "navigationBarBackgroundColor": "#fff",
     "navigationBarTitleText": "孑一百科",
     "navigationBarTextStyle":"black"
+  },
+  "usingComponents": {
+    "van-button": "@vant/weapp/button/index",
+    "van-image": "@vant/weapp/image/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-overlay": "@vant/weapp/overlay/index",
+    "van-nav-bar": "@vant/weapp/nav-bar/index",
+    "van-grid": "@vant/weapp/grid/index",
+    "van-grid-item": "@vant/weapp/grid-item/index",
+    "van-search": "@vant/weapp/search/index"
   },
   "sitemapLocation": "sitemap.json"
 }
