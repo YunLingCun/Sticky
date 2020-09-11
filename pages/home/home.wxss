@@ -1,4 +1,4 @@
-/**index.wxss**/
+/**home.wxss**/
 
 .wrapper {
     display: flex;
