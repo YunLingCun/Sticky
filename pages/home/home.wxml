@@ -5,15 +5,11 @@
 
 <view>
     <van-nav-bar fixed/>
-    <view class="container">
-        <van-overlay show="{{ !canIUse }}" >
-            <view class="wrapper">
-                <van-button open-type="getUserInfo" bind:getuserinfo="getUserInfo" type="primary">授权登录</van-button>
-            </view>
-        </van-overlay>
-        <view class="me"></view>
-        <view class="wiki"></view>
-        <view class="quiz"></view>
-        <view class="coupon"></view>
-    </view>
+    <van-overlay show="{{ !auth }}">
+        <view class="wrapper">
+            <van-button open-type="getUserInfo" bind:getuserinfo="getUserInfo" type="primary">授权登录</van-button>
+        </view>
+        <van-toast id="van-toast"/>
+    </van-overlay>
+    <view>HelloWorld</view>
 </view>
