@@ -1,7 +1,7 @@
 //app.js
 
-import apis from './apis/apis';
 
+import apis from "./apis/apis";
 
 App({
     onLaunch: function () {

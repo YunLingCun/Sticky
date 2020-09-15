@@ -1,8 +1,8 @@
 // 获取小程序全局配置（变量、函数等）
 const app = getApp()
 // 定义网络请求API地址
-// const BaseURL = 'https://api.bytebody.com'
-const BaseURL = 'http://localhost'
+const BaseURL = 'https://api.bytebody.com'
+// const BaseURL = 'http://localhost'
 const AuthTokenName = 'authToken'
 const NetworkError = "网络错误，请检查网络"
 const HTTPCode = {
@@ -40,27 +40,28 @@ const fetch = (path, data, method, header, ...other) => {
 
 // 重构请求方式
 const authFetch = async (path, data, method, header) => {
-    let auth = wx.getStorageSync(AuthTokenName)
+    const auth = wx.getStorageSync(AuthTokenName)
     // auth 不存在或者已过期
     if (!auth || auth.expires < new Date()) {
-        auth = await login().then(data => data).catch(reason => {
-            throw new Error(reason.errMsg)
-        })
+        throw new Error("authorization has expired")
     }
-    header = {"Authorization": auth.token, ...header}
-    let response = await fetch(path, data, method, header)
+    let response = await fetch(path, data, method, {"Authorization": auth.token, ...header})
     // 如果服务器放回未授权则登录
     if (response.statusCode === HTTPCode.Unauthorized) {
-        auth = await login().then(data => data).catch(reason => {
-            throw new Error(reason.errMsg)
-        })
-        response = await fetch(path, data, method, header)
-        return response
+        throw new Error("unauthorized")
     }
     return response
 }
 
-const login = () => new Promise((resolve) => {
+const login = (enforce) => new Promise((resolve) => {
+    if (!enforce) {
+        const auth = wx.getStorageSync(AuthTokenName)
+        // auth 不存在或者已过期
+        if (auth && auth.expires > new Date()) {
+            resolve(auth)
+            return
+        }
+    }
     wx.login({
         fail: (result) => {
             throw Error(result.errMsg)
@@ -82,8 +83,8 @@ const login = () => new Promise((resolve) => {
     })
 })
 
-const userInfo = async (userInfo) => {
-    await authFetch("/user", userInfo, "put", null).then(response => {
+const userInfo = async (encryptedData, iv) => {
+    await authFetch("/users/miniprogram/userinfo", {encryptedData, iv}, "put", null).then(response => {
         if (response.statusCode === HTTPCode.OK) {
             app.globalData.userInfo = response.data
         } else {

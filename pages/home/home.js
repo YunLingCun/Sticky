@@ -1,5 +1,6 @@
 //home.js
 import Toast from '../../miniprogram_npm/@vant/weapp/toast/toast';
+import apis from "../../apis/apis";
 //获取应用实例
 const app = getApp()
 
@@ -15,7 +16,9 @@ Page({
     getUserInfo: function (e) {
         if (e.detail.errMsg === 'getUserInfo:ok') {
             this.setData({auth: true})
-            console.log(e.detail)
+            console.log(e)
+            apis.UserInfo(e.detail.encryptedData, e.detail.iv).then(result => {
+            }).catch(reason => console.log(reason))
         } else {
             Toast('授权后才能使用哦😊😊');
         }
@@ -26,6 +29,13 @@ Page({
             success(res) {
                 if (res.authSetting['scope.userInfo']) {
                     that.setData({auth: true})
+                    wx.getUserInfo({
+                        success: result => {
+                            apis.UserInfo(result.encryptedData, result.iv).then(result => {
+                                console.log(result)
+                            }).catch(reason => console.log(reason))
+                        }
+                    })
                 } else {
                     that.setData({auth: false})
                 }
