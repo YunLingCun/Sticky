@@ -1,14 +1,17 @@
+import {promisifyAll} from 'miniprogram-api-promise';
 // 获取小程序全局配置（变量、函数等）
+const wxp = {}
+promisifyAll(wx, wxp)
 const app = getApp()
 // 定义网络请求API地址
 const BaseURL = 'https://api.bytebody.com'
-// const BaseURL = 'http://localhost'
 const AuthTokenName = 'authToken'
 const NetworkError = "网络错误，请检查网络"
 const HTTPCode = {
     OK: 200,
     BadRequest: 400,
     Unauthorized: 401,
+    NetworkError: -1
 }
 
 const defaultHeader = {
@@ -17,25 +20,21 @@ const defaultHeader = {
     "X-APP-ID": "wxae0d23630594d9a0"
 }
 
-const fetch = (path, data, method, header, ...other) => {
+const fetch = async (path, data, method, header, ...other) => {
     header = {...header, ...defaultHeader}
-    return new Promise((resolve) => {
-        wx.request({
-            // 请求地址拼接
+    try {
+        return await wxp.request({// 请求地址拼
             url: BaseURL + path,
             data: data,
             // 获取请求头配置
             header: header,
             method: method,
             ...other,
-            success: (response) => {
-                resolve(response)
-            },
-            fail: (reason) => {
-                throw Error(reason.errMsg)
-            }
         })
-    })
+    } catch (e) {
+        console.log("fetch:", e)
+        return {statusCode: HTTPCode.NetworkError}
+    }
 }
 
 // 重构请求方式
@@ -43,19 +42,15 @@ const authFetch = async (path, data, method, header) => {
     const auth = wx.getStorageSync(AuthTokenName)
     // auth 不存在或者已过期
     if (!auth || auth.expires < new Date()) {
-        throw new Error("authorization has expired")
+        return {statusCode: HTTPCode.Unauthorized}
     }
-    let response = await fetch(path, data, method, {"Authorization": auth.token, ...header})
-    // 如果服务器放回未授权则登录
-    if (response.statusCode === HTTPCode.Unauthorized) {
-        throw new Error("unauthorized")
-    }
-    return response
+    return await fetch(path, data, method, {"Authorization": auth.token, ...header})
 }
+
 
 const login = (enforce) => new Promise((resolve) => {
     if (!enforce) {
-        const auth = wx.getStorageSync(AuthTokenName)
+        const auth = wx.getStorageSync(AuthhokenName)
         // auth 不存在或者已过期
         if (auth && auth.expires > new Date()) {
             resolve(auth)
