@@ -12,8 +12,8 @@ const HTTPCode = {
 }
 
 const defaultHeader = {
-    Version: "1.0.0",
     Type: "miniprogram",
+    "X-Version-Code": "1.0.0",
     "X-APP-ID": "wxae0d23630594d9a0"
 }
 
