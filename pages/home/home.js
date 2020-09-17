@@ -8,17 +8,27 @@ const app = getApp()
 Page({
     data: {
         canIUse: wx.canIUse("button.open-type.getUserInfo"),
-        auth: true
+        isAuth: true
     },
     onLoad: function () {
         const that = this
-        app.isAuth().then(auth => that.setData({auth: auth}))
+        app.isAuth().then(isAuth => that.setData({isAuth}))
     },
     getUserInfo: function (e) {
-        if (e.detail.errMsg === 'getUserInfo:ok') {
-            this.setData({auth: true})
-        } else {
-            Toast('授权后才能使用哦😊😊');
-        }
+        const that = this
+        app.isAuth().then(isAuth => {
+            if (isAuth) {
+                that.setData({isAuth})
+            } else {
+                Toast('授权后才能使用哦😊😊');
+            }
+        })
     },
+    getPhoneNumber: function (e) {
+        if (e.detail.errMsg === 'getPhoneNumber:ok') {
+            app.putUserInfo(3, e.detail).then(result => {
+                console.log("putUserInfo:", result ? "success" : "fail")
+            })
+        }
+    }
 })

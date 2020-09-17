@@ -5,11 +5,13 @@
 
 <view>
     <van-nav-bar fixed/>
-    <van-overlay show="{{ !auth }}">
+    <van-overlay show="{{ !isAuth }}">
         <view class="wrapper">
             <van-button open-type="getUserInfo" bind:getuserinfo="getUserInfo" type="primary">授权登录</van-button>
         </view>
         <van-toast id="van-toast"/>
     </van-overlay>
-    <view>HelloWorld</view>
+    <view class="container">
+        <van-button open-type="getPhoneNumber" bind:getphonenumber="getPhoneNumber" type="primary"></van-button>
+    </view>
 </view>

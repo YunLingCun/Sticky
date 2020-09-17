@@ -2,7 +2,7 @@ import {promisifyAll} from 'miniprogram-api-promise';
 // 获取小程序全局配置（变量、函数等）
 const wxp = {}
 promisifyAll(wx, wxp)
-const app = getApp()
+let loginEnforce = false
 // 定义网络请求API地址
 const BaseURL = 'https://api.bytebody.com'
 const AuthTokenName = 'authToken'
@@ -54,7 +54,8 @@ const login = async (enforce) => {
     if (!enforce) {
         const auth = wx.getStorageSync(AuthTokenName)
         // auth 不存在或者已过期
-        if (auth && auth.expires > new Date()) {
+        if (auth && Date.parse(auth.expires) > new Date()) {
+            console.log("auth:", auth)
             return {statusCode: HTTPCode.OK, data: auth}
         }
     }
@@ -75,11 +76,7 @@ const login = async (enforce) => {
 
 const putUserInfo = async (encryptedData, iv) => {
     try {
-        const response = await authFetch("/users/miniprogram/userinfo", {encryptedData, iv}, "put", null)
-        if (response.statusCode === HTTPCode.OK) {
-            app.globalData.userInfo = response.data
-        }
-        return response
+        return await authFetch("/users/miniprogram/userinfo", {encryptedData, iv}, "put", null)
     } catch (e) {
         return {statusCode: HTTPCode.NetworkError, data: e.message}
     }

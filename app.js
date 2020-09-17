@@ -7,10 +7,10 @@ promisifyAll(wx, wxp)
 
 App({
     onLaunch: function () {
-        this.Login().then(response => console.log("login:", response))
+        this.Login(false).then()
     },
-    async Login() {
-        const response = await apis.Login()
+    async Login(enforce) {
+        const response = await apis.Login(enforce)
         console.log("login:", response)
         switch (response.statusCode) {
             case apis.HTTPCode.OK:
@@ -48,15 +48,20 @@ App({
             return false
         }
     },
-    putUserInfo: async function (times) {
+    putUserInfo: async function (times, userInfo) {
+        console.log("putUserInfo.times:", times)
         if (times <= 0) {
             return false
         }
         try {
-            const userInfo = await wxp.getUserInfo()
+            if (!userInfo) {
+                userInfo = await wxp.getUserInfo()
+            }
             const response = await apis.PutUserInfo(userInfo.encryptedData, userInfo.iv)
+            console.log("response:", response)
             switch (response.statusCode) {
                 case apis.HTTPCode.OK:
+                    this.globalData.userInfo = response.data
                     return true
                 case apis.HTTPCode.NetworkError:
                     wx.showToast({
@@ -65,10 +70,10 @@ App({
                         mask: false,
                         icon: "none"
                     })
-                    break
+                    return await this.putUserInfo(times - 1)
                 case apis.HTTPCode.Unauthorized:
-                    await this.Login()
-                    break
+                    await this.Login(true)
+                    return await this.putUserInfo(times - 1)
                 default:
                     wx.showToast({
                         title: "未知错误",
@@ -76,13 +81,12 @@ App({
                         mask: false,
                         icon: "none"
                     })
-                    break
+                    return await this.putUserInfo(times - 1)
             }
         } catch (e) {
             console.log("putUserInfo:", e)
+            return await this.putUserInfo(times - 1)
         }
-        return await this.putUserInfo(times - 1)
     },
-
     globalData: {}
 })
