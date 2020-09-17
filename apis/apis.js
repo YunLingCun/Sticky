@@ -21,6 +21,9 @@ const defaultHeader = {
 }
 
 const fetch = async (path, data, method, header, ...other) => {
+    if (!header) {
+        header = {}
+    }
     header = {...header, ...defaultHeader}
     try {
         return await wxp.request({// 请求地址拼
@@ -47,47 +50,39 @@ const authFetch = async (path, data, method, header) => {
     return await fetch(path, data, method, {"Authorization": auth.token, ...header})
 }
 
-
-const login = (enforce) => new Promise((resolve) => {
+const login = async (enforce) => {
     if (!enforce) {
-        const auth = wx.getStorageSync(AuthhokenName)
+        const auth = wx.getStorageSync(AuthTokenName)
         // auth 不存在或者已过期
         if (auth && auth.expires > new Date()) {
-            resolve(auth)
-            return
+            return {statusCode: HTTPCode.OK, data: auth}
         }
     }
-    wx.login({
-        fail: (result) => {
-            throw Error(result.errMsg)
-        },
-        success: result => {
-            const data = {code: result.code, system: wx.getSystemInfoSync()}
-            const other = {dateType: "其他"}
-            fetch("/auth/miniprogram/token", data, "post", null, other).then(response => {
-                if (response.statusCode === HTTPCode.OK) {
-                    wx.setStorageSync(AuthTokenName, response.data)
-                    resolve(response.data)
-                } else {
-                    throw Error(response.data)
-                }
-            }).catch(reason => {
-                throw Error(reason.errMsg)
-            })
+    try {
+        const result = await wxp.login()
+        const data = {code: result.code, system: wx.getSystemInfoSync()}
+        const other = {dateType: "其他"}
+        const response = await fetch("/auth/miniprogram/token", data, "post", null, other)
+        if (response.statusCode === HTTPCode.OK) {
+            wx.setStorageSync(AuthTokenName, response.data)
         }
-    })
-})
+        return response
+    } catch (e) {
+        return {statusCode: HTTPCode.NetworkError, data: e.message}
+    }
+}
 
-const userInfo = async (encryptedData, iv) => {
-    await authFetch("/users/miniprogram/userinfo", {encryptedData, iv}, "put", null).then(response => {
+
+const putUserInfo = async (encryptedData, iv) => {
+    try {
+        const response = await authFetch("/users/miniprogram/userinfo", {encryptedData, iv}, "put", null)
         if (response.statusCode === HTTPCode.OK) {
             app.globalData.userInfo = response.data
-        } else {
-            throw  new Error(response.data)
         }
-    }).catch(reason => {
-        throw new Error(reason.errMsg)
-    })
+        return response
+    } catch (e) {
+        return {statusCode: HTTPCode.NetworkError, data: e.message}
+    }
 }
 
 
@@ -122,5 +117,5 @@ module.exports = {
     APIs: APIs,
     HTTPCode: HTTPCode,
     Login: login,
-    UserInfo: userInfo
+    PutUserInfo: putUserInfo
 }
